@@ -1,0 +1,44 @@
+#!/bin/bash
+
+# Path to the default connection list file
+CONNECTION_FILE="$HOME/.fastconnection/default.list"
+
+# Check if fzf is installed
+if ! command -v fzf &> /dev/null; then
+    echo "fzf is not installed. Please install it to use this script."
+    exit 1
+fi
+
+# Check if the connection file exists
+if [ ! -f "$CONNECTION_FILE" ]; then
+    echo "Connection file not found at $CONNECTION_FILE"
+    exit 1
+fi
+
+# Read and parse the connection file, and use fzf for interactive selection
+selected_line=$(cat "$CONNECTION_FILE" | fzf)
+
+# Check if a line was selected
+if [ -z "$selected_line" ]; then
+    echo "No connection selected. Exiting."
+    exit 0
+fi
+
+# Parse the selected line for username, IP, and port
+username=$(echo "$selected_line" | awk '{print $1}' | cut -d'@' -f1)
+ip=$(echo "$selected_line" | awk '{print $1}' | cut -d'@' -f2)
+port=$(echo "$selected_line" | awk '{print $2}')
+
+# Check if all components are valid
+if [ -z "$username" ] || [ -z "$ip" ] || [ -z "$port" ]; then
+    echo "Invalid connection details: $selected_line"
+    exit 1
+fi
+
+# Execute the SSH command
+ssh "$username@$ip" -p "$port"
+
+# Example default.list file:
+# username1@12.34.56.78 12345
+# username2@12.34.56.78 67890
+# copy fcon to one of your $PATH directory
